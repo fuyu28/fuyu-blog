@@ -13,17 +13,18 @@ export interface PostEntry {
   frontmatter: Frontmatter;
 }
 
-const DEFAULT_CONTENT_DIR = "external-posts";
+const DEFAULT_CONTENT_DIR = "content-repo";
+const POSTS_ROOT_DIR = "external_post";
 const POST_ENTRY_FILENAME = "index.md";
 
 function resolvePostsRoot(): string {
   const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  return path.join(process.cwd(), contentDir);
+  return path.join(process.cwd(), contentDir, POSTS_ROOT_DIR);
 }
 
 function formatPostPath(slug: string): string {
   const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  return `${contentDir}/${slug}/${POST_ENTRY_FILENAME}`;
+  return `${contentDir}/${POSTS_ROOT_DIR}/${slug}/${POST_ENTRY_FILENAME}`;
 }
 
 function toPosixPath(filePath: string): string {
@@ -40,7 +41,7 @@ async function assertPostsRootExists(postsRoot: string): Promise<void> {
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(
-        `Posts root not found: ${postsRoot}. Did you fetch the content repo into "${DEFAULT_CONTENT_DIR}/"?`,
+      `Posts root not found: ${postsRoot}. Did you fetch the content repo into "${DEFAULT_CONTENT_DIR}/"?`,
       );
     }
     throw error;
@@ -87,7 +88,7 @@ async function listPostSlugs(postsRoot: string): Promise<string[]> {
 
   if (found.length === 0) {
     throw new Error(
-      `No posts found in ${postsRoot}. Expected "${DEFAULT_CONTENT_DIR}/<slug>/${POST_ENTRY_FILENAME}".`,
+      `No posts found in ${postsRoot}. Expected "${DEFAULT_CONTENT_DIR}/${POSTS_ROOT_DIR}/<slug>/${POST_ENTRY_FILENAME}".`,
     );
   }
 

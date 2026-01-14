@@ -102,20 +102,20 @@ bun install
 `.env.local`ファイルを作成し、以下の環境変数を設定します：
 
 ```bash
-# コンテンツを配置するディレクトリ（デフォルト: external-posts）
-CONTENT_DIR=external-posts
+# コンテンツを配置するディレクトリ（デフォルト: content-repo）
+CONTENT_DIR=content-repo
 ```
 
 ### 4. コンテンツリポジトリの準備
 
-ブログ記事用のリポジトリに`external-posts/<slug>/index.md`の構成で Markdown を配置します。
+ブログ記事用のリポジトリに`external_post/<slug>/index.md`の構成で Markdown を配置します。
 
 ### 5. コンテンツリポジトリの取得（ビルド時）
 
-ビルド前にコンテンツリポジトリを `external-posts/` に取得します。Cloudflare Pages ならビルドコマンドに以下を追加するイメージです。
+ビルド前にコンテンツリポジトリを `content-repo/` に取得します。Cloudflare Pages ならビルドコマンドに以下を追加するイメージです。
 
 ```bash
-git clone https://github.com/your_user/your_content_repo external-posts
+git clone https://github.com/your_user/your_content_repo content-repo
 bun run build
 ```
 
@@ -132,7 +132,7 @@ printf "%s" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
 chmod 600 ~/.ssh/id_ed25519
 ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-git clone git@github.com:your_user/your_content_repo external-posts
+git clone git@github.com:your_user/your_content_repo content-repo
 bun run build
 ```
 
@@ -340,7 +340,7 @@ Error: Cannot find module '@/lib/...'
 開発サーバーのログに以下のような警告が表示される場合：
 
 ```
-⚠️  記事をスキップしました: external-posts/example/index.md
+⚠️  記事をスキップしました: content-repo/external_post/example/index.md
    理由: Invalid frontmatter
 ⚠️  1件の記事がバリデーションエラーによりスキップされました
 ```
