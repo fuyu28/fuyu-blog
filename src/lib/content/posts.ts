@@ -13,17 +13,17 @@ export interface PostEntry {
   frontmatter: Frontmatter;
 }
 
-const DEFAULT_CONTENT_DIR = "content";
-const POSTS_DIR = "posts";
+const DEFAULT_CONTENT_DIR = "external-posts";
+const POST_ENTRY_FILENAME = "index.md";
 
-function resolvePostsDir(): string {
+function resolvePostsRoot(): string {
   const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  return path.join(process.cwd(), contentDir, POSTS_DIR);
+  return path.join(process.cwd(), contentDir);
 }
 
 function formatPostPath(slug: string): string {
   const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  return `${contentDir}/${POSTS_DIR}/${slug}.md`;
+  return `${contentDir}/${slug}/${POST_ENTRY_FILENAME}`;
 }
 
 function toPosixPath(filePath: string): string {
@@ -34,51 +34,66 @@ function createContentSha(raw: string): string {
   return createHash("sha1").update(raw).digest("hex");
 }
 
-async function assertPostsDirExists(postsDir: string): Promise<void> {
+async function assertPostsRootExists(postsRoot: string): Promise<void> {
   try {
-    await fs.access(postsDir);
+    await fs.access(postsRoot);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(
-        `Posts directory not found: ${postsDir}. Did you fetch the content repo into "${DEFAULT_CONTENT_DIR}/"?`,
+        `Posts root not found: ${postsRoot}. Did you fetch the content repo into "${DEFAULT_CONTENT_DIR}/"?`,
       );
     }
     throw error;
   }
 }
 
-async function listMarkdownFiles(postsDir: string): Promise<string[]> {
-  const files: string[] = [];
-
-  async function walk(currentDir: string): Promise<void> {
-    const entries = await fs.readdir(currentDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(currentDir, entry.name);
-
-      if (entry.isDirectory()) {
-        await walk(fullPath);
-        continue;
-      }
-
-      if (entry.isFile() && entry.name.endsWith(".md")) {
-        files.push(path.relative(postsDir, fullPath));
-      }
-    }
+function normalizeSlug(slug: string): string {
+  const cleaned = slug.trim();
+  if (
+    cleaned.length === 0 ||
+    cleaned === "." ||
+    cleaned === ".." ||
+    cleaned.includes("/") ||
+    cleaned.includes("\\")
+  ) {
+    throw new Error(`Invalid slug: ${slug}`);
   }
-
-  await walk(postsDir);
-  files.sort((a, b) => a.localeCompare(b));
-
-  return files;
+  return cleaned;
 }
 
-function resolvePostFilePath(postsDir: string, slug: string): string {
-  const safeSlug = slug.replace(/^\//, "");
-  const candidate = path.resolve(postsDir, `${safeSlug}.md`);
-  const normalizedPostsDir = path.resolve(postsDir);
+async function listPostSlugs(postsRoot: string): Promise<string[]> {
+  const entries = await fs.readdir(postsRoot, { withFileTypes: true });
+  const slugs = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => normalizeSlug(entry.name))
+    .sort((a, b) => a.localeCompare(b));
 
-  if (!candidate.startsWith(`${normalizedPostsDir}${path.sep}`) && candidate !== normalizedPostsDir) {
+  await Promise.all(
+    slugs.map(async (slug) => {
+      const filePath = path.join(postsRoot, slug, POST_ENTRY_FILENAME);
+      try {
+        await fs.access(filePath);
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Post entry not found: ${filePath}. Expected "${POST_ENTRY_FILENAME}".`);
+        }
+        throw error;
+      }
+    }),
+  );
+
+  return slugs;
+}
+
+function resolvePostFilePath(postsRoot: string, slug: string): string {
+  const safeSlug = normalizeSlug(slug.replace(/^\//, ""));
+  const candidate = path.resolve(postsRoot, safeSlug, POST_ENTRY_FILENAME);
+  const normalizedPostsRoot = path.resolve(postsRoot);
+
+  if (
+    !candidate.startsWith(`${normalizedPostsRoot}${path.sep}`) &&
+    candidate !== normalizedPostsRoot
+  ) {
     throw new Error(`Invalid slug: ${slug}`);
   }
 
@@ -86,7 +101,7 @@ function resolvePostFilePath(postsDir: string, slug: string): string {
 }
 
 /**
- * content/posts/以下のmdファイルの一覧を取得（内部関数・キャッシュ化）
+ * external-posts 以下の index.md を取得（内部関数・キャッシュ化）
  * Cache Components機能で1時間キャッシュ
  *
  * エラーハンドリング: バリデーションエラーがある記事はスキップし、警告ログを出力
@@ -97,21 +112,21 @@ async function listPostsCached(): Promise<PostEntry[]> {
   cacheLife("hours");
   cacheTag("posts");
   const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  const postsDir = resolvePostsDir();
-  await assertPostsDirExists(postsDir);
-  const files = await listMarkdownFiles(postsDir);
+  const postsRoot = resolvePostsRoot();
+  await assertPostsRootExists(postsRoot);
+  const slugs = await listPostSlugs(postsRoot);
 
   // 各ファイルのfrontmatterを並列で取得（エラー記事はスキップ）
   const results = await Promise.allSettled(
-    files.map(async (relativePath) => {
-      const absolutePath = path.join(postsDir, relativePath);
+    slugs.map(async (slug) => {
+      const absolutePath = resolvePostFilePath(postsRoot, slug);
       const raw = await fs.readFile(absolutePath, "utf-8");
       const { frontmatter } = parsePost(raw);
-      const posixPath = toPosixPath(path.join(POSTS_DIR, relativePath));
+      const posixPath = toPosixPath(path.join(contentDir, slug, POST_ENTRY_FILENAME));
 
       return {
-        slug: posixPath.replace(/^posts\//, "").replace(/\.md$/, ""),
-        path: `${contentDir}/${posixPath}`,
+        slug,
+        path: posixPath,
         sha: createContentSha(raw),
         frontmatter,
       };
@@ -121,7 +136,7 @@ async function listPostsCached(): Promise<PostEntry[]> {
   const entries: PostEntry[] = [];
 
   results.forEach((result, index) => {
-    const path = files[index] ?? "unknown";
+    const path = slugs[index] ?? "unknown";
 
     if (result.status === "fulfilled") {
       entries.push(result.value);
@@ -131,17 +146,17 @@ async function listPostsCached(): Promise<PostEntry[]> {
     const reason = result.reason;
     if (reason instanceof FrontmatterValidationError) {
       console.warn("Skipping post due to invalid frontmatter", {
-        path,
+        path: `${path}/${POST_ENTRY_FILENAME}`,
         issues: reason.issues,
       });
     } else if (reason instanceof Error) {
       console.warn("Skipping post due to unexpected error", {
-        path,
+        path: `${path}/${POST_ENTRY_FILENAME}`,
         error: reason.message,
       });
     } else {
       console.warn("Skipping post due to unexpected error", {
-        path,
+        path: `${path}/${POST_ENTRY_FILENAME}`,
         error: String(reason),
       });
     }
@@ -167,7 +182,7 @@ function restoreDates<T extends { frontmatter: Frontmatter }>(item: T): T {
 }
 
 /**
- * content/posts/以下のmdファイルの一覧を取得
+ * external-posts 以下の index.md を取得
  * @returns slug, path, sha, frontmatter（Dateオブジェクト復元済み）
  */
 export async function listPosts(): Promise<PostEntry[]> {
@@ -208,9 +223,9 @@ async function getPostBySlugCached(
   cacheLife("hours");
   cacheTag("posts", `post-${slug}`);
 
-  const postsDir = resolvePostsDir();
-  await assertPostsDirExists(postsDir);
-  const filePath = resolvePostFilePath(postsDir, slug);
+  const postsRoot = resolvePostsRoot();
+  await assertPostsRootExists(postsRoot);
+  const filePath = resolvePostFilePath(postsRoot, slug);
   const raw = await fs.readFile(filePath, "utf-8");
   const { frontmatter, content } = parsePost(raw);
 
@@ -249,10 +264,6 @@ export async function getPostBySlug(
         error: error.message,
       });
 
-      // レートリミットエラーの場合は詳細を表示
-      if (error.message.includes("rate limit")) {
-        console.error("  → GitHub APIのレートリミットに達しました");
-      }
     }
 
     // 記事が見つからない場合、Next.jsのnot-foundページを表示
