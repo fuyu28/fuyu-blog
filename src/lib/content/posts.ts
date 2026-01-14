@@ -64,7 +64,7 @@ function normalizeSlug(slug: string): string {
 async function listPostSlugs(postsRoot: string): Promise<string[]> {
   const entries = await fs.readdir(postsRoot, { withFileTypes: true });
   const slugs = entries
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
     .map((entry) => normalizeSlug(entry.name))
     .sort((a, b) => a.localeCompare(b));
 
