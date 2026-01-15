@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Footer } from "@/components/Footer";
 
+export const runtime = "edge";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html

@@ -1,6 +1,5 @@
 "use server";
 
-import { createHash } from "crypto";
 import { cookies } from "next/headers";
 import { getPostBySlug } from "@/lib/content/posts";
 
@@ -14,8 +13,14 @@ function protectedCookieName(slug: string) {
   return `protected-post-${slug}`;
 }
 
-function sha256(value: string) {
-  return createHash("sha256").update(value).digest("hex");
+const encoder = new TextEncoder();
+
+async function sha256Hex(value: string): Promise<string> {
+  const data = encoder.encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function hasProtectedAccess(slug: string, expectedHash: string): Promise<boolean> {
@@ -37,7 +42,7 @@ export async function loadProtectedPost(slug: string): Promise<ProtectedPostActi
     };
   }
 
-  const expectedHash = sha256(frontmatter.password);
+  const expectedHash = await sha256Hex(frontmatter.password);
   if (!(await hasProtectedAccess(slug, expectedHash))) {
     return { success: false };
   }
@@ -67,8 +72,8 @@ export async function verifyProtectedPostPassword(
     return { error: "パスワードを入力してください。" };
   }
 
-  const expectedHash = sha256(frontmatter.password);
-  const inputHash = sha256(input);
+  const expectedHash = await sha256Hex(frontmatter.password);
+  const inputHash = await sha256Hex(input);
   if (inputHash !== expectedHash) {
     return { error: "パスワードが一致しません。" };
   }

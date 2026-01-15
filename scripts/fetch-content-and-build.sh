@@ -30,4 +30,4 @@ clone_repo git@github.com:fuyu28/my-blog-contents.git content-repo
 
 # --- 依存 & ビルド ---
 bun install --frozen-lockfile
-bun run build
+bun run build:worker
