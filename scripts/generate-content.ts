@@ -24,8 +24,8 @@ const DEFAULT_POSTS_ROOT_DIR = "external-posts";
 const POST_ENTRY_FILENAME = "index.md";
 
 function resolvePostsRoot(): string {
-  const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  const postsRootDir = process.env.POSTS_ROOT_DIR ?? DEFAULT_POSTS_ROOT_DIR;
+  const contentDir = process.env.CONTENT_DIR?.trim() || DEFAULT_CONTENT_DIR;
+  const postsRootDir = process.env.POSTS_ROOT_DIR?.trim() || DEFAULT_POSTS_ROOT_DIR;
   return path.join(process.cwd(), contentDir, postsRootDir);
 }
 
@@ -128,8 +128,8 @@ async function assertPostsRootExists(postsRoot: string): Promise<void> {
 }
 
 async function buildPosts(): Promise<SerializedPostEntry[]> {
-  const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  const postsRootDir = process.env.POSTS_ROOT_DIR ?? DEFAULT_POSTS_ROOT_DIR;
+  const contentDir = process.env.CONTENT_DIR?.trim() || DEFAULT_CONTENT_DIR;
+  const postsRootDir = process.env.POSTS_ROOT_DIR?.trim() || DEFAULT_POSTS_ROOT_DIR;
   const postsRoot = resolvePostsRoot();
   await assertPostsRootExists(postsRoot);
   const slugs = await listPostSlugs(postsRoot);

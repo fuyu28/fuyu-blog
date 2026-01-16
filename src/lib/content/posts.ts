@@ -18,8 +18,8 @@ const DEFAULT_POSTS_ROOT_DIR = "external-posts";
 const POST_ENTRY_FILENAME = "index.md";
 
 function formatPostPath(slug: string): string {
-  const contentDir = process.env.CONTENT_DIR ?? DEFAULT_CONTENT_DIR;
-  const postsRootDir = process.env.POSTS_ROOT_DIR ?? DEFAULT_POSTS_ROOT_DIR;
+  const contentDir = process.env.CONTENT_DIR?.trim() || DEFAULT_CONTENT_DIR;
+  const postsRootDir = process.env.POSTS_ROOT_DIR?.trim() || DEFAULT_POSTS_ROOT_DIR;
   return `${contentDir}/${postsRootDir}/${slug}/${POST_ENTRY_FILENAME}`;
 }
 

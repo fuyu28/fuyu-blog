@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getPostBySlug, listPosts } from "@/lib/content/posts";
-import { ProtectedPostGate } from "./ProtectedPostGate";
 
 // これで静的パスを事前に生成（public/unlistedのみ）
 export async function generateStaticParams() {
@@ -20,18 +19,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
   // access: "private"は非表示
   if (frontmatter.access === "private") {
     notFound();
-  }
-
-  if (frontmatter.access === "protected") {
-    const dateLabel = frontmatter.date?.toLocaleDateString("ja-JP");
-    return (
-      <ProtectedPostGate
-        slug={slug}
-        title={frontmatter.title}
-        dateLabel={dateLabel}
-        hasPassword={Boolean(frontmatter.password)}
-      />
-    );
   }
 
   return (
