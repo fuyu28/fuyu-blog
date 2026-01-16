@@ -30,4 +30,4 @@ export const posts: SerializedPostEntry[] = [
   }
 ];
 
-export const postsGeneratedAt = "2026-01-16T12:27:37.763Z";
+export const postsGeneratedAt = "2026-01-16T12:54:33.779Z";

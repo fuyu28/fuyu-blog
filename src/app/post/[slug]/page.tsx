@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { getPostBySlug, listPosts } from "@/lib/content/posts";
 
 // これで静的パスを事前に生成（public/unlistedのみ）
@@ -23,33 +26,35 @@ export default async function PostPage({ params }: { params: { slug: string } })
 
   return (
     <article className="space-y-10">
-      {/* ヘッダー部分 */}
-      <header className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          {frontmatter.title}
-        </h1>
+      <Card>
+        <CardHeader className="space-y-3">
+          <CardTitle className="text-2xl text-slate-900 text-balance">
+            {frontmatter.title}
+          </CardTitle>
 
-        <div className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400 sm:flex-row sm:items-center sm:gap-4">
-          {frontmatter.date !== undefined && (
-            <span>日付: {frontmatter.date.toLocaleDateString("ja-JP")}</span>
-          )}
-        </div>
-
-        <div className="h-px bg-linear-to-r from-transparent via-zinc-300/60 to-transparent dark:via-zinc-700/60" />
-      </header>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            {frontmatter.date !== undefined && (
+              <Badge className="uppercase tracking-wide">
+                {frontmatter.date.toLocaleDateString("ja-JP")}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-3">
+          <Separator className="bg-linear-to-r from-transparent via-slate-300/60 to-transparent" />
+        </CardContent>
+      </Card>
 
       {/* 本文部分 */}
       <div
         className="
-          prose prose-zinc dark:prose-invert
+          prose prose-slate
           prose-headings:scroll-mt-24
           prose-headings:font-semibold
           prose-h2:text-xl
           prose-h3:text-lg
-          prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl
-          prose-code:rounded prose-code:bg-zinc-100 prose-code:px-1 prose-code:text-zinc-900
-          dark:prose-pre:bg-zinc-800 dark:prose-pre:text-zinc-100
-          dark:prose-code:bg-zinc-800 dark:prose-code:text-zinc-100
+          prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl
+          prose-code:rounded prose-code:bg-slate-100 prose-code:px-1 prose-code:text-slate-900
           max-w-none
         "
       >

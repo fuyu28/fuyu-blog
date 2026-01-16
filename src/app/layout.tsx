@@ -5,21 +5,19 @@ import { Footer } from "@/components/Footer";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="ja"
-      className="bg-linear-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 dark:from-zinc-900 dark:via-zinc-950 dark:to-black dark:text-zinc-100"
-    >
+    <html lang="ja" className="bg-slate-50 text-slate-900">
       <body className="min-h-screen antialiased">
-        <header className="border-b border-zinc-200/60 bg-white/70 backdrop-blur-md dark:bg-zinc-900/60 dark:border-zinc-800/60">
-          <div className="mx-auto max-w-3xl px-4 py-6 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(186,230,253,0.6),transparent_55%)]" />
+        <header className="border-b border-slate-200/70 bg-white/75 shadow-sm backdrop-blur-md">
+          <div className="mx-auto flex max-w-3xl flex-col gap-1 px-4 py-6 sm:flex-row sm:items-baseline sm:justify-between">
             <Link
               href="/"
-              className="text-2xl font-semibold tracking-tight text-zinc-800 dark:text-zinc-100 hover:opacity-80"
+              className="text-2xl font-semibold tracking-tight text-slate-900 transition hover:text-slate-600"
             >
               Fuyu`s blog
             </Link>
 
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">技術メモとか雑記とか</p>
+            <p className="text-sm text-slate-500">技術メモとか雑記とか</p>
           </div>
         </header>
 
@@ -27,8 +25,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <Suspense
           fallback={
-            <footer className="mx-auto max-w-3xl px-4 py-12 text-center text-xs text-zinc-400 dark:text-zinc-600">
-              © 2025 Fuyu
+            <footer className="mx-auto max-w-3xl px-4 py-12 text-center text-xs text-slate-400">
+              © 2026 Fuyu
             </footer>
           }
         >
